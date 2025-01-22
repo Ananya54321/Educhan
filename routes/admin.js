@@ -5,6 +5,7 @@ const z = require("zod");
 const adminSchema = require("../models/adminSchema");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { adminMiddleware } = require("../middleware/admin");
 
 require("dotenv").config();
 
@@ -59,7 +60,7 @@ adminRouter.post("/signup", async (req, res) => {
     });
     console.log(user);
 
-    res.redirect("/user/login");
+    res.redirect("/admin/login");
   }
 });
 
@@ -79,6 +80,25 @@ adminRouter.post("/login", async (req, res) => {
     console.log(token);
     res.redirect("/courses");
   } else res.redirect("/user/login");
+});
+
+// TODO: let the user upload the image instead of inputting the ImageURL
+adminRouter.post("/courses", adminMiddleware, async (req, res) => {
+  const adminId = req.userId;
+  const { title, description, imageURL, price } = req.body;
+
+  const course = await courseModel.create({
+    title,
+    description,
+    imageURL,
+    price,
+    creatorId: adminId,
+  });
+
+  res.json({
+    message: "Course Created Successfully",
+    course,
+  });
 });
 
 module.exports = { adminRouter };

@@ -44,7 +44,7 @@ adminRouter.post("/signup", async (req, res) => {
   const result = userValidationSchema.safeParse(req.body);
   if (!result.success) {
     console.log(result.error);
-    res.redirect("/user/signup");
+    res.redirect("/admin/signup");
   } else {
     const { firstname, lastname, email, password } = req.body;
     // hash the password so that the plaintext password isnt stored in the DB.
@@ -78,8 +78,8 @@ adminRouter.post("/login", async (req, res) => {
       process.env.JWT_ADMIN_SECRET
     );
     console.log(token);
-    res.redirect("/courses");
-  } else res.redirect("/user/login");
+    res.redirect("/admin/courses");
+  } else res.redirect("/admin/login");
 });
 
 // TODO: let the user upload the image instead of inputting the ImageURL
@@ -99,6 +99,13 @@ adminRouter.post("/courses", adminMiddleware, async (req, res) => {
     message: "Course Created Successfully",
     course,
   });
+});
+
+adminRouter.get("/courses", adminMiddleware, async (req, res) => {
+  const adminId = req.userId;
+  const courses = await courseModel.find({ creatorId: adminId });
+  console.log(courses);
+  res.redirect("/admin/courses");
 });
 
 module.exports = { adminRouter };

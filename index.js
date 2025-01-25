@@ -6,7 +6,9 @@ require("dotenv").config();
 const { courseRouter } = require("./routes/courses");
 const { userRouter } = require("./routes/users");
 const { adminRouter } = require("./routes/admin");
+const cookieParser = require("cookie-parser");
 
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/user", userRouter);

@@ -6,6 +6,7 @@ const adminSchema = require("../models/adminSchema");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { adminMiddleware } = require("../middleware/admin");
+const courseSchema = require("../models/courseSchema");
 
 require("dotenv").config();
 
@@ -25,11 +26,11 @@ const userValidationSchema = z
   });
 
 adminRouter.get("/signup", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/signup.html"));
+  res.sendFile(path.join(__dirname, "../public/admin/signup.html"));
 });
 
 adminRouter.get("/login", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/login.html"));
+  res.sendFile(path.join(__dirname, "../public/admin/login.html"));
 });
 
 adminRouter.post("/signup", async (req, res) => {
@@ -75,9 +76,15 @@ adminRouter.post("/login", async (req, res) => {
       {
         userId: admin[0]._id,
       },
-      process.env.JWT_ADMIN_SECRET
+      process.env.JWT_ADMIN_SECRET,
+      { expiresIn: "1d" }
     );
     console.log(token);
+
+    res.cookie("token", token, {
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+    console.log("the cookie has been set in the token");
     res.redirect("/admin/courses");
   } else res.redirect("/admin/login");
 });
@@ -87,7 +94,7 @@ adminRouter.post("/courses", adminMiddleware, async (req, res) => {
   const adminId = req.userId;
   const { title, description, imageURL, price } = req.body;
 
-  const course = await courseModel.create({
+  const course = await courseSchema.create({
     title,
     description,
     imageURL,
@@ -101,11 +108,35 @@ adminRouter.post("/courses", adminMiddleware, async (req, res) => {
   });
 });
 
+adminRouter.put("/courses", adminMiddleware, async (req, res) => {
+  const adminId = req.userId;
+  const { title, description, imageURL, price, courseId } = req.body;
+  const course = await courseSchema.updateOne(
+    {
+      _id: courseId,
+      creatorId: adminId,
+    },
+    {
+      title,
+      description,
+      imageURL,
+      price,
+    }
+  );
+  res.json("course updated successfully");
+});
+
 adminRouter.get("/courses", adminMiddleware, async (req, res) => {
   const adminId = req.userId;
-  const courses = await courseModel.find({ creatorId: adminId });
+  const courses = await courseSchema.find({ creatorId: adminId });
   console.log(courses);
-  res.redirect("/admin/courses");
+  res.json({
+    courses,
+  });
+});
+
+adminRouter.get("/hi", adminMiddleware, async (req, res) => {
+  res.send("hi");
 });
 
 module.exports = { adminRouter };
